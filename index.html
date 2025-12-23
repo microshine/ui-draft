@@ -171,17 +171,6 @@
         gap: 12px;
         min-width: 0;
       }
-      .back {
-        width: 34px;
-        height: 34px;
-        border-radius: 10px;
-        background: #fff;
-        border: 1px solid var(--line);
-        display: grid;
-        place-items: center;
-        color: #374151;
-        cursor: default;
-      }
       .titleBlock h1 {
         margin: 0;
         font-size: 18px;
@@ -199,6 +188,27 @@
         display: flex;
         gap: 10px;
         align-items: center;
+      }
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .crumb {
+        cursor: default;
+        color: var(--blue);
+      }
+      .crumb.active {
+        color: #111827;
+        font-weight: 700;
+      }
+      .crumb:not(.active) {
+        cursor: pointer;
+      }
+      .crumb:hover {
+        text-decoration: underline;
       }
       .btn {
         border-radius: 10px;
@@ -264,11 +274,63 @@
         font-size: 12px;
       }
 
-      /* Profiles list */
-      .sectionTitle {
+      /* Authenticators list */
+      .authenticators-list {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .authenticator-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+        cursor: pointer;
+      }
+      .authenticator-item:hover {
+        background: rgba(37, 99, 235, 0.02);
+      }
+      .authenticator-item .badge {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: rgba(37, 99, 235, 0.1);
+        border: 1px solid rgba(37, 99, 235, 0.18);
+        display: grid;
+        place-items: center;
+        color: var(--blue);
         font-weight: 950;
-        margin: 18px 0 10px;
-        padding: 0 4px;
+      }
+      .authenticator-item .meta {
+        min-width: 0;
+        flex: 1;
+      }
+      .authenticator-item .name {
+        font-weight: 950;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .authenticator-item .desc {
+        color: var(--muted);
+        font-weight: 650;
+        font-size: 13px;
+        margin-top: 2px;
+      }
+      .authenticator-item .chev {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #fff;
+        display: grid;
+        place-items: center;
+        color: #374151;
+        font-weight: 900;
       }
       .profiles {
         display: grid;
@@ -284,6 +346,10 @@
         border: 1px solid var(--line);
         border-radius: 12px;
         background: #fff;
+        cursor: pointer;
+      }
+      .profileItem:hover {
+        background: rgba(37, 99, 235, 0.02);
       }
       .profileLeft {
         display: flex;
@@ -474,7 +540,9 @@
           <div class="brand">goodkey</div>
 
           <nav class="nav">
-            <a class="active" href="javascript:void(0)"><span class="ico"></span> Tokens</a>
+            <a class="active" id="navAuthenticators" href="javascript:void(0)"
+              ><span class="ico"></span> Authenticators</a
+            >
             <a href="javascript:void(0)"><span class="ico"></span> Organization</a>
             <a href="javascript:void(0)"><span class="ico"></span> Devices</a>
           </nav>
@@ -491,14 +559,42 @@
         </aside>
 
         <main class="main">
-          <!-- VIEW 1: TOKEN (общая форма карты + список профилей) -->
-          <section data-view="token" class="active">
+          <!-- VIEW 0: AUTHENTICATORS LIST -->
+          <section data-view="authenticators" class="active">
             <div class="headerRow">
-              <div class="titleBlock">
-                <div class="back">‹</div>
-                <div style="min-width: 0">
-                  <h1>YubiKey #26748006</h1>
+              <div class="breadcrumb">
+                <span class="crumb active">Authenticators</span>
+              </div>
+
+              <div class="actions">
+                <button class="btn" type="button">Refresh</button>
+              </div>
+            </div>
+
+            <div class="authenticators-list">
+              <div
+                class="authenticator-item"
+                role="button"
+                tabindex="0"
+                data-open-token="yubikey-26748006"
+              >
+                <div class="badge">Y</div>
+                <div class="meta">
+                  <div class="name">YubiKey #26748006</div>
+                  <div class="desc">YubiKey 5C NFC · Connected</div>
                 </div>
+                <div class="chev">›</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- VIEW 1: TOKEN (общая форма карты + список профилей) -->
+          <section data-view="token">
+            <div class="headerRow">
+              <div class="breadcrumb">
+                <span class="crumb" id="authenticatorsCrumb">Authenticators</span>
+                <span>></span>
+                <span class="crumb active">YubiKey #26748006</span>
               </div>
 
               <div class="actions">
@@ -507,13 +603,13 @@
             </div>
 
             <div class="tabs" id="tokenTabs" role="tablist" aria-label="Token tabs">
-              <div class="tab active" data-tab="details">Details</div>
-              <div class="tab" data-tab="profiles">Profiles</div>
+              <div class="tab" data-tab="details">Details</div>
+              <div class="tab active" data-tab="profiles">Profiles</div>
               <div class="tab" data-tab="manage">Manage</div>
             </div>
 
             <!-- DETAILS -->
-            <div data-panel="details" class="active">
+            <div data-panel="details">
               <div class="card">
                 <div class="kv">
                   <div class="k">Label</div>
@@ -531,7 +627,7 @@
             </div>
 
             <!-- PROFILES -->
-            <div data-panel="profiles">
+            <div data-panel="profiles" class="active">
               <div class="sectionTitle">Profiles</div>
               <div class="profiles">
                 <div class="profileItem" role="button" tabindex="0" data-open-profile="piv">
@@ -604,15 +700,12 @@
           <!-- VIEW 2: PROFILE (внутренний шаг, свои табы) -->
           <section data-view="profile">
             <div class="headerRow">
-              <div class="titleBlock">
-                <div class="back" id="backBtn" title="Back">‹</div>
-                <div style="min-width: 0">
-                  <h1>
-                    YubiKey #26748006
-                    <span style="color: var(--muted); font-weight: normal">·</span>
-                    <span id="profileTitle">Profile</span>
-                  </h1>
-                </div>
+              <div class="breadcrumb">
+                <span class="crumb" id="authenticatorsCrumbProfile">Authenticators</span>
+                <span>></span>
+                <span class="crumb" id="tokenCrumb">YubiKey #26748006</span>
+                <span>></span>
+                <span class="crumb active" id="profileTitle">Profile</span>
               </div>
 
               <div class="actions">
@@ -650,9 +743,9 @@
 
     <script>
       // View switching
+      const viewAuthenticators = document.querySelector('[data-view="authenticators"]');
       const viewToken = document.querySelector('[data-view="token"]');
       const viewProfile = document.querySelector('[data-view="profile"]');
-      const backBtn = document.getElementById('backBtn');
 
       const tabs = document.querySelectorAll('#profileTabs .tab[data-tab]');
       const panels = (k) => document.querySelector(`#profileTabs ~ [data-panel="${k}"]`);
@@ -663,6 +756,23 @@
           .querySelectorAll('#profileTabs ~ [data-panel]')
           .forEach((p) => p.classList.remove('active'));
         panels(key).classList.add('active');
+      }
+
+      function openToken(key) {
+        // Switch to token view
+        viewAuthenticators.classList.remove('active');
+        viewToken.classList.add('active');
+        // When opening a token from Authenticators, default to Details tab
+        setTokenTab('details');
+      }
+
+      function closeToAuthenticators() {
+        viewToken.classList.remove('active');
+        viewProfile.classList.remove('active');
+        viewAuthenticators.classList.add('active');
+        // Update sidebar active
+        document.querySelectorAll('.nav a').forEach((a) => a.classList.remove('active'));
+        document.getElementById('navAuthenticators').classList.add('active');
       }
 
       // Simple profile data (mock)
@@ -869,11 +979,10 @@
       }
 
       function openProfile(key) {
+        console.log('Opening profile: ' + key);
         renderProfile(key);
         viewToken.classList.remove('active');
         viewProfile.classList.add('active');
-        // show back button
-        backBtn.style.visibility = 'visible';
       }
 
       function closeProfile() {
@@ -882,6 +991,14 @@
         setTokenTab('profiles');
       }
 
+      document.querySelectorAll('[data-open-token]').forEach((item) => {
+        item.addEventListener('click', () => openToken(item.dataset.openToken));
+        item.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') openToken(item.dataset.openToken);
+        });
+      });
+
+      // Open profile items (e.g. PIV, FIDO2, OTP, OATH)
       document.querySelectorAll('[data-open-profile]').forEach((item) => {
         item.addEventListener('click', () => openProfile(item.dataset.openProfile));
         item.addEventListener('keydown', (e) => {
@@ -889,7 +1006,12 @@
         });
       });
 
-      backBtn.addEventListener('click', closeProfile);
+      document
+        .getElementById('authenticatorsCrumb')
+        ?.addEventListener('click', closeToAuthenticators);
+      document
+        .getElementById('authenticatorsCrumbProfile')
+        ?.addEventListener('click', closeToAuthenticators);
 
       tabs.forEach((t) => t.addEventListener('click', () => setTab(t.dataset.tab)));
 
@@ -903,6 +1025,14 @@
         document.querySelector(`#tokenTabs ~ [data-panel="${key}"]`).classList.add('active');
       }
       tokenTabs.forEach((t) => t.addEventListener('click', () => setTokenTab(t.dataset.tab)));
+
+      document.getElementById('tokenCrumb')?.addEventListener('click', closeProfile);
+
+      // Sidebar navigation
+      document
+        .getElementById('navAuthenticators')
+        ?.addEventListener('click', closeToAuthenticators);
+      // Other links can be added later
     </script>
   </body>
 </html>
