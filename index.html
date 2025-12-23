@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GoodKey SmartCard — Profiles as deep view</title>
+    <style>
+      :root {
+        --bg: #f5f7fb;
+        --panel: #fff;
+        --text: #1f2a37;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --blue: #2563eb;
+        --blue-600: #1d4ed8;
+        --red: #ef4444;
+        --shadow: 0 10px 30px rgba(16, 24, 40, 0.1);
+        --radius: 14px;
+        --radius-sm: 10px;
+        --font:
+          ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+          'Apple Color Emoji', 'Segoe UI Emoji';
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #0b0f19;
+        font-family: var(--font);
+        color: var(--text);
+      }
+
+      /* Window */
+      .window {
+        width: min(1200px, 95vw);
+        height: min(760px, 92vh);
+        margin: 6vh auto;
+        background: var(--panel);
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+      }
+      .titlebar {
+        height: 48px;
+        background: #2f333a;
+        color: #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-weight: 700;
+      }
+      .traffic {
+        position: absolute;
+        left: 14px;
+        display: flex;
+        gap: 8px;
+      }
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 99px;
+      }
+      .dot.red {
+        background: #ff5f57;
+      }
+      .dot.yellow {
+        background: #febc2e;
+      }
+      .dot.green {
+        background: #28c840;
+      }
+
+      /* Layout */
+      .app {
+        height: calc(100% - 48px);
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        background: var(--bg);
+      }
+
+      /* Sidebar */
+      .sidebar {
+        background: #fff;
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        padding: 22px 18px;
+      }
+      .brand {
+        font-size: 34px;
+        font-weight: 900;
+        color: #1f4bd8;
+        margin: 6px 8px 22px;
+        letter-spacing: -0.6px;
+      }
+      .nav {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px 4px;
+      }
+      .nav a {
+        text-decoration: none;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        border-radius: 12px;
+        font-weight: 700;
+      }
+      .nav a.active {
+        background: rgba(37, 99, 235, 0.1);
+        color: var(--blue);
+      }
+      .ico {
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+        background: currentColor;
+        opacity: 0.2;
+      }
+      .spacer {
+        flex: 1;
+      }
+      .user {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 10px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+      }
+      .avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        background: rgba(37, 99, 235, 0.12);
+        color: var(--blue);
+        display: grid;
+        place-items: center;
+        font-weight: 900;
+      }
+      .user .name {
+        color: #374151;
+        font-weight: 800;
+      }
+      .user .mail {
+        font-size: 13px;
+      }
+
+      /* Main */
+      .main {
+        padding: 22px 26px;
+        overflow: auto;
+      }
+
+      /* Header (reused for token & profile) */
+      .headerRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+      .titleBlock {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+      .back {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: #fff;
+        border: 1px solid var(--line);
+        display: grid;
+        place-items: center;
+        color: #374151;
+        cursor: default;
+      }
+      .titleBlock h1 {
+        margin: 0;
+        font-size: 18px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .subtitle {
+        color: var(--muted);
+        font-weight: 650;
+        font-size: 13px;
+        margin-top: 3px;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .btn {
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #fff;
+        padding: 10px 14px;
+        font-weight: 800;
+        cursor: default;
+        color: #111827;
+      }
+      .btn.primary {
+        background: var(--blue);
+        border-color: var(--blue);
+        color: #fff;
+        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
+      }
+      .btn.primary:hover {
+        background: var(--blue-600);
+      }
+      .btn.danger {
+        border-color: rgba(239, 68, 68, 0.45);
+        color: var(--red);
+        background: rgba(239, 68, 68, 0.06);
+      }
+
+      /* Sections / cards */
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: 0 8px 22px rgba(16, 24, 40, 0.06);
+        padding: 18px;
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        gap: 12px 18px;
+        align-items: center;
+        padding: 8px;
+      }
+      .k {
+        color: var(--muted);
+        font-weight: 750;
+      }
+      .v {
+        color: #111827;
+        font-weight: 800;
+      }
+      .link {
+        color: var(--blue);
+        text-decoration: none;
+        font-weight: 900;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: rgba(37, 99, 235, 0.1);
+        color: var(--blue);
+        border: 1px solid rgba(37, 99, 235, 0.18);
+        font-weight: 900;
+        font-size: 12px;
+      }
+
+      /* Profiles list */
+      .sectionTitle {
+        font-weight: 950;
+        margin: 18px 0 10px;
+        padding: 0 4px;
+      }
+      .profiles {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .profileItem {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+      }
+      .profileLeft {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+      .badge {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: rgba(37, 99, 235, 0.1);
+        border: 1px solid rgba(37, 99, 235, 0.18);
+        display: grid;
+        place-items: center;
+        color: var(--blue);
+        font-weight: 950;
+      }
+      .profileMeta {
+        min-width: 0;
+      }
+      .profileName {
+        font-weight: 950;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .profileDesc {
+        color: var(--muted);
+        font-weight: 650;
+        font-size: 13px;
+        margin-top: 2px;
+      }
+      .chev {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #fff;
+        display: grid;
+        place-items: center;
+        color: #374151;
+        font-weight: 900;
+      }
+
+      /* Tabs inside profile view only */
+      .tabs {
+        display: flex;
+        gap: 20px;
+        align-items: flex-end;
+        border-bottom: 1px solid var(--line);
+        padding: 0 4px;
+        margin: 6px 0 18px;
+      }
+      .tab {
+        padding: 12px 6px;
+        font-weight: 950;
+        color: var(--muted);
+        position: relative;
+        cursor: default;
+      }
+      .tab.active {
+        color: #111827;
+      }
+      .tab.active::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -1px;
+        height: 3px;
+        background: var(--blue);
+        border-radius: 3px 3px 0 0;
+      }
+
+      /* Objects list */
+      .list {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+      }
+      .listHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 14px;
+        background: #fbfcff;
+        border-bottom: 1px solid var(--line);
+        font-weight: 950;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 220px;
+        gap: 12px;
+        padding: 14px;
+        border-bottom: 1px solid var(--line);
+        align-items: center;
+      }
+      .row:last-child {
+        border-bottom: none;
+      }
+      .row .type {
+        font-weight: 950;
+      }
+      .row .meta {
+        color: var(--muted);
+        font-weight: 750;
+        text-align: right;
+      }
+
+      /* Manage actions */
+      .manage {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .actionItem {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        background: #fff;
+      }
+      .actionItem h3 {
+        margin: 0 0 6px;
+        font-size: 16px;
+      }
+      .actionItem p {
+        margin: 0;
+        color: var(--muted);
+        font-weight: 650;
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      /* Views switching */
+      [data-view] {
+        display: none;
+      }
+      [data-view].active {
+        display: block;
+      }
+      [data-panel] {
+        display: none;
+      }
+      [data-panel].active {
+        display: block;
+      }
+
+      /* Responsive */
+      @media (max-width: 980px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          display: none;
+        }
+        .kv {
+          grid-template-columns: 140px 1fr;
+        }
+        .row {
+          grid-template-columns: 1fr;
+        }
+        .row .meta {
+          text-align: left;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="window">
+      <div class="titlebar">
+        <div class="traffic">
+          <div class="dot red"></div>
+          <div class="dot yellow"></div>
+          <div class="dot green"></div>
+        </div>
+        GoodKey SmartCard
+      </div>
+
+      <div class="app">
+        <aside class="sidebar">
+          <div class="brand">goodkey</div>
+
+          <nav class="nav">
+            <a class="active" href="javascript:void(0)"><span class="ico"></span> Tokens</a>
+            <a href="javascript:void(0)"><span class="ico"></span> Organization</a>
+            <a href="javascript:void(0)"><span class="ico"></span> Devices</a>
+          </nav>
+
+          <div class="spacer"></div>
+
+          <div class="user">
+            <div class="avatar">S</div>
+            <div>
+              <div class="name">Stepan Miroshin</div>
+              <div class="mail">microshine@peculia…</div>
+            </div>
+          </div>
+        </aside>
+
+        <main class="main">
+          <!-- VIEW 1: TOKEN (общая форма карты + список профилей) -->
+          <section data-view="token" class="active">
+            <div class="headerRow">
+              <div class="titleBlock">
+                <div class="back">‹</div>
+                <div style="min-width: 0">
+                  <h1>YubiKey #26748006</h1>
+                </div>
+              </div>
+
+              <div class="actions">
+                <button class="btn" type="button">Refresh</button>
+              </div>
+            </div>
+
+            <div class="tabs" id="tokenTabs" role="tablist" aria-label="Token tabs">
+              <div class="tab active" data-tab="details">Details</div>
+              <div class="tab" data-tab="profiles">Profiles</div>
+              <div class="tab" data-tab="manage">Manage</div>
+            </div>
+
+            <!-- DETAILS -->
+            <div data-panel="details" class="active">
+              <div class="card">
+                <div class="kv">
+                  <div class="k">Label</div>
+                  <div class="v">YubiKey #26748006</div>
+                  <div class="k">Serial</div>
+                  <div class="v">26748006</div>
+                  <div class="k">Firmware</div>
+                  <div class="v">5.43</div>
+                  <div class="k">Model</div>
+                  <div class="v"><a class="link" href="javascript:void(0)">YubiKey 5C NFC</a></div>
+                  <div class="k">Status</div>
+                  <div class="v"><span class="pill">New</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PROFILES -->
+            <div data-panel="profiles">
+              <div class="sectionTitle">Profiles</div>
+              <div class="profiles">
+                <div class="profileItem" role="button" tabindex="0" data-open-profile="piv">
+                  <div class="profileLeft">
+                    <div class="badge">P</div>
+                    <div class="profileMeta">
+                      <div class="profileName">PIV</div>
+                      <div class="profileDesc">Certificates & keys · 4 slots · PIN required</div>
+                    </div>
+                  </div>
+                  <div class="chev">›</div>
+                </div>
+
+                <div class="profileItem" role="button" tabindex="0" data-open-profile="fido2">
+                  <div class="profileLeft">
+                    <div class="badge">F</div>
+                    <div class="profileMeta">
+                      <div class="profileName">FIDO2</div>
+                      <div class="profileDesc">Passkeys & WebAuthn · UV/UP supported</div>
+                    </div>
+                  </div>
+                  <div class="chev">›</div>
+                </div>
+
+                <div class="profileItem" role="button" tabindex="0" data-open-profile="otp">
+                  <div class="profileLeft">
+                    <div class="badge">O</div>
+                    <div class="profileMeta">
+                      <div class="profileName">OTP</div>
+                      <div class="profileDesc">2 slots · Yubico OTP / HOTP</div>
+                    </div>
+                  </div>
+                  <div class="chev">›</div>
+                </div>
+
+                <div class="profileItem" role="button" tabindex="0" data-open-profile="oath">
+                  <div class="profileLeft">
+                    <div class="badge">A</div>
+                    <div class="profileMeta">
+                      <div class="profileName">OATH</div>
+                      <div class="profileDesc">TOTP/HOTP accounts · 3 configured</div>
+                    </div>
+                  </div>
+                  <div class="chev">›</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- MANAGE -->
+            <div data-panel="manage">
+              <div class="manage">
+                <div class="actionItem">
+                  <div>
+                    <h3>Register Smart Card</h3>
+                    <p>Register this smart card with the organization.</p>
+                  </div>
+                  <button class="btn primary" type="button">Register</button>
+                </div>
+                <div class="actionItem">
+                  <div>
+                    <h3>Unregister Smart Card</h3>
+                    <p>Remove this smart card from the organization (irreversible).</p>
+                  </div>
+                  <button class="btn danger" type="button">Unregister</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- VIEW 2: PROFILE (внутренний шаг, свои табы) -->
+          <section data-view="profile">
+            <div class="headerRow">
+              <div class="titleBlock">
+                <div class="back" id="backBtn" title="Back">‹</div>
+                <div style="min-width: 0">
+                  <h1>
+                    YubiKey #26748006
+                    <span style="color: var(--muted); font-weight: normal">·</span>
+                    <span id="profileTitle">Profile</span>
+                  </h1>
+                </div>
+              </div>
+
+              <div class="actions">
+                <!-- Можно держать тут только профильные экшены, а глобальные — только на токене -->
+                <button class="btn" type="button" id="profileQuickAction">Refresh</button>
+              </div>
+            </div>
+
+            <div class="tabs" id="profileTabs" role="tablist" aria-label="Profile tabs">
+              <div class="tab active" data-tab="details">Details</div>
+              <div class="tab" data-tab="objects">Objects</div>
+              <div class="tab" data-tab="manage">Manage</div>
+            </div>
+
+            <!-- DETAILS -->
+            <div data-panel="details" class="active">
+              <div class="card" id="detailsCard">
+                <!-- content injected -->
+              </div>
+            </div>
+
+            <!-- OBJECTS -->
+            <div data-panel="objects">
+              <div id="objectsArea"></div>
+            </div>
+
+            <!-- MANAGE -->
+            <div data-panel="manage">
+              <div class="manage" id="manageArea"></div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      // View switching
+      const viewToken = document.querySelector('[data-view="token"]');
+      const viewProfile = document.querySelector('[data-view="profile"]');
+      const backBtn = document.getElementById('backBtn');
+
+      const tabs = document.querySelectorAll('#profileTabs .tab[data-tab]');
+      const panels = (k) => document.querySelector(`#profileTabs ~ [data-panel="${k}"]`);
+
+      function setTab(key) {
+        tabs.forEach((t) => t.classList.toggle('active', t.dataset.tab === key));
+        document
+          .querySelectorAll('#profileTabs ~ [data-panel]')
+          .forEach((p) => p.classList.remove('active'));
+        panels(key).classList.add('active');
+      }
+
+      // Simple profile data (mock)
+      const profiles = {
+        piv: {
+          title: 'PIV',
+          subtitle: 'YubiKey #26748006 · Certificates & keys',
+          quick: 'Refresh',
+          detailsHTML: `
+          <div style="font-weight:950; margin:2px 0 10px;">PIV Profile</div>
+          <div class="kv">
+            <div class="k">Profile Status</div><div class="v"><span class="pill">Enabled</span></div>
+            <div class="k">PIN Policy</div><div class="v">User PIN required</div>
+            <div class="k">Key Type</div><div class="v">RSA/ECC supported</div>
+            <div class="k">Objects</div><div class="v">4 slots</div>
+            <div class="k">Certificates Loaded</div><div class="v">2 / 4</div>
+            <div class="k">Keys Generated</div><div class="v">2</div>
+            <div class="k">PIN Attempts Left</div><div class="v">3</div>
+            <div class="k">PUK Attempts Left</div><div class="v">10</div>
+            <div class="k">Attestation</div><div class="v">Supported</div>
+            <div class="k">Last Used</div><div class="v">2 hours ago</div>
+          </div>
+        `,
+          objectsHTML: `
+          <div class="list">
+            <div class="listHeader">
+              <div>PIV Objects</div>
+              <div style="color:var(--muted); font-weight:850; font-size:13px;">Type ▾</div>
+            </div>
+            <div class="row"><div class="type">PIV Authentication</div><div class="meta">No certificate loaded</div></div>
+            <div class="row"><div class="type">Digital Signature</div><div class="meta">No certificate loaded</div></div>
+            <div class="row"><div class="type">Key Management</div><div class="meta">No certificate loaded</div></div>
+            <div class="row"><div class="type">Card Authentication</div><div class="meta">No certificate loaded</div></div>
+          </div>
+        `,
+          manage: [
+            {
+              title: 'Sync Smart Card',
+              desc: 'Synchronize profile objects with the server.',
+              btn: 'Sync',
+              kind: 'normal'
+            },
+            {
+              title: 'Change PIN',
+              desc: 'Change the PIN code for this profile.',
+              btn: 'Change PIN',
+              kind: 'normal'
+            }
+          ]
+        },
+
+        fido2: {
+          title: 'FIDO2',
+          subtitle: 'YubiKey #26748006 · Passkeys & WebAuthn',
+          quick: 'Refresh',
+          detailsHTML: `
+          <div style="font-weight:950; margin:2px 0 10px;">FIDO2 Profile</div>
+          <div class="kv">
+            <div class="k">Profile Status</div><div class="v"><span class="pill">Enabled</span></div>
+            <div class="k">UV/UP</div><div class="v">Supported</div>
+            <div class="k">Resident Keys</div><div class="v">Supported</div>
+            <div class="k">Credentials</div><div class="v">0 saved</div>
+            <div class="k">PIN Set</div><div class="v">Yes</div>
+            <div class="k">UV Enabled</div><div class="v">No</div>
+            <div class="k">Credentials Count</div><div class="v">3</div>
+            <div class="k">Resident Keys Count</div><div class="v">5</div>
+            <div class="k">Last Auth</div><div class="v">Never</div>
+          </div>
+        `,
+          objectsHTML: `
+          <div class="list">
+            <div class="listHeader">
+              <div>FIDO2 Credentials</div>
+              <div style="color:var(--muted); font-weight:850; font-size:13px;">Type ▾</div>
+            </div>
+            <div class="row"><div class="type">Google Account</div><div class="meta">Resident</div></div>
+            <div class="row"><div class="type">GitHub</div><div class="meta">Non-resident</div></div>
+            <div class="row"><div class="type">Microsoft</div><div class="meta">Resident</div></div>
+          </div>
+        `,
+          manage: [
+            {
+              title: 'Set PIN',
+              desc: 'Create or change the FIDO2 PIN.',
+              btn: 'Set PIN',
+              kind: 'normal'
+            },
+            {
+              title: 'Reset FIDO2',
+              desc: 'Resets FIDO2 application data on the token (irreversible).',
+              btn: 'Reset',
+              kind: 'danger'
+            }
+          ]
+        },
+
+        otp: {
+          title: 'OTP',
+          subtitle: 'YubiKey #26748006 · 2 OTP slots',
+          quick: 'Refresh',
+          detailsHTML: `
+          <div style="font-weight:950; margin:2px 0 10px;">OTP Profile</div>
+          <div class="kv">
+            <div class="k">Profile Status</div><div class="v"><span class="pill">Enabled</span></div>
+            <div class="k">Slots</div><div class="v">2</div>
+            <div class="k">Configured</div><div class="v">0 / 2</div>
+            <div class="k">Slot 1 Configured</div><div class="v">No</div>
+            <div class="k">Slot 2 Configured</div><div class="v">No</div>
+            <div class="k">Algorithm</div><div class="v">Yubico OTP</div>
+            <div class="k">Touch Required</div><div class="v">Yes</div>
+            <div class="k">Last Used</div><div class="v">1 week ago</div>
+          </div>
+        `,
+          objectsHTML: `
+          <div class="list">
+            <div class="listHeader">
+              <div>OTP Slots</div>
+              <div style="color:var(--muted); font-weight:850; font-size:13px;">Status</div>
+            </div>
+            <div class="row"><div class="type">Slot 1</div><div class="meta">Empty</div></div>
+            <div class="row"><div class="type">Slot 2</div><div class="meta">Empty</div></div>
+          </div>
+        `,
+          manage: [
+            {
+              title: 'Program Slot',
+              desc: 'Configure OTP slot parameters (requires permissions).',
+              btn: 'Program',
+              kind: 'normal'
+            }
+          ]
+        },
+
+        oath: {
+          title: 'OATH',
+          subtitle: 'YubiKey #26748006 · TOTP/HOTP',
+          quick: 'Refresh',
+          detailsHTML: `
+          <div style="font-weight:950; margin:2px 0 10px;">OATH Profile</div>
+          <div class="kv">
+            <div class="k">Profile Status</div><div class="v"><span class="pill">Enabled</span></div>
+            <div class="k">Accounts</div><div class="v">0</div>
+            <div class="k">Algorithm</div><div class="v">TOTP/HOTP</div>
+            <div class="k">Accounts Count</div><div class="v">3</div>
+            <div class="k">TOTP Enabled</div><div class="v">Yes</div>
+            <div class="k">HOTP Enabled</div><div class="v">Yes</div>
+            <div class="k">Touch Required</div><div class="v">No</div>
+            <div class="k">Last Generated</div><div class="v">Never</div>
+          </div>
+        `,
+          objectsHTML: `
+          <div class="list">
+            <div class="listHeader">
+              <div>OATH Accounts</div>
+              <div style="color:var(--muted); font-weight:850; font-size:13px;">Type ▾</div>
+            </div>
+            <div class="row"><div class="type">Google Authenticator</div><div class="meta">TOTP</div></div>
+            <div class="row"><div class="type">Dropbox</div><div class="meta">TOTP</div></div>
+            <div class="row"><div class="type">AWS</div><div class="meta">HOTP</div></div>
+          </div>
+        `,
+          manage: [
+            {
+              title: 'Add Account',
+              desc: 'Add a new OATH credential (QR / manual).',
+              btn: 'Add',
+              kind: 'normal'
+            },
+            {
+              title: 'Reset OATH',
+              desc: 'Remove all OATH accounts from the token (irreversible).',
+              btn: 'Reset',
+              kind: 'danger'
+            }
+          ]
+        }
+      };
+
+      function renderProfile(key) {
+        const p = profiles[key];
+        document.getElementById('profileTitle').textContent = p.title;
+        document.getElementById('profileQuickAction').textContent = p.quick;
+
+        document.getElementById('detailsCard').innerHTML = p.detailsHTML;
+        document.getElementById('objectsArea').innerHTML = p.objectsHTML;
+
+        const manageArea = document.getElementById('manageArea');
+        manageArea.innerHTML = '';
+        p.manage.forEach((a) => {
+          const el = document.createElement('div');
+          el.className = 'actionItem';
+          el.innerHTML = `
+          <div>
+            <h3>${a.title}</h3>
+            <p>${a.desc}</p>
+          </div>
+          <button class="btn ${a.kind === 'danger' ? 'danger' : ''}" type="button">${a.btn}</button>
+        `;
+          manageArea.appendChild(el);
+        });
+
+        // default tab
+        setTab('details');
+      }
+
+      function openProfile(key) {
+        renderProfile(key);
+        viewToken.classList.remove('active');
+        viewProfile.classList.add('active');
+        // show back button
+        backBtn.style.visibility = 'visible';
+      }
+
+      function closeProfile() {
+        viewProfile.classList.remove('active');
+        viewToken.classList.add('active');
+        setTokenTab('profiles');
+      }
+
+      document.querySelectorAll('[data-open-profile]').forEach((item) => {
+        item.addEventListener('click', () => openProfile(item.dataset.openProfile));
+        item.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') openProfile(item.dataset.openProfile);
+        });
+      });
+
+      backBtn.addEventListener('click', closeProfile);
+
+      tabs.forEach((t) => t.addEventListener('click', () => setTab(t.dataset.tab)));
+
+      // Token tabs
+      const tokenTabs = document.querySelectorAll('#tokenTabs .tab[data-tab]');
+      function setTokenTab(key) {
+        tokenTabs.forEach((t) => t.classList.toggle('active', t.dataset.tab === key));
+        document
+          .querySelectorAll('#tokenTabs ~ [data-panel]')
+          .forEach((p) => p.classList.remove('active'));
+        document.querySelector(`#tokenTabs ~ [data-panel="${key}"]`).classList.add('active');
+      }
+      tokenTabs.forEach((t) => t.addEventListener('click', () => setTokenTab(t.dataset.tab)));
+    </script>
+  </body>
+</html>
